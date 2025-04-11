@@ -1,4 +1,4 @@
-// Configuração copiada do Firebase
+// Inicialização Firebase usando módulos compatíveis com CDN
 const firebaseConfig = {
   apiKey: "AIzaSyA-UgOXLstg1j8MBpLndSu1S2HqXRc6c",
   authDomain: "busway-4df70.firebaseapp.com",
@@ -10,32 +10,33 @@ const firebaseConfig = {
   measurementId: "G-94KF7C5DLZ"
 };
 
-// Inicializa o Firebase
-firebase.initializeApp(firebaseConfig);
+// Inicializa o Firebase App
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
-// Função de login
+// Login
 function login() {
   const email = document.getElementById("email").value;
   const senha = document.getElementById("password").value;
 
-  firebase.auth().signInWithEmailAndPassword(email, senha)
-    .then(userCredential => {
+  auth.signInWithEmailAndPassword(email, senha)
+    .then(() => {
       alert("Login realizado com sucesso!");
-      // Redireciona ou carrega painel admin aqui
+      // redirecionar ou mostrar painel
     })
     .catch(error => {
-      alert("Erro ao fazer login: " + error.message);
+      alert("Erro ao logar: " + error.message);
     });
 }
 
-// Função de cadastro
+// Cadastro
 function register() {
   const email = document.getElementById("email").value;
   const senha = document.getElementById("password").value;
 
-  firebase.auth().createUserWithEmailAndPassword(email, senha)
-    .then(userCredential => {
-      alert("Conta criada com sucesso!");
+  auth.createUserWithEmailAndPassword(email, senha)
+    .then(() => {
+      alert("Usuário cadastrado com sucesso!");
     })
     .catch(error => {
       alert("Erro ao cadastrar: " + error.message);
