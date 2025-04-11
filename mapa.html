@@ -6,27 +6,48 @@
   <title>BusWay - Mapa de Ônibus</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
-    #map {
-      height: 100vh;
-      width: 100%;
+    body {
+      margin: 0;
+      font-family: sans-serif;
     }
-    .locate-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      padding: 10px 15px;
-      background: #1976d2;
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #1976d2;
+      padding: 10px 20px;
       color: white;
+    }
+    .top-bar h2 {
+      margin: 0;
+    }
+    .top-bar .buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .top-bar button {
+      background: white;
+      color: #1976d2;
       border: none;
+      padding: 8px 12px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 14px;
+      font-weight: bold;
+    }
+    #map {
+      height: calc(100vh - 60px);
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <button class="locate-btn" onclick="locateUser()">📍 Minha Localização</button>
+  <div class="top-bar">
+    <h2>BusWay - Mapa Público</h2>
+    <div class="buttons">
+      <button onclick="locateUser()">📍 Minha Localização</button>
+      <button onclick="window.location.href='admin.html'">🛠 Painel Admin</button>
+    </div>
+  </div>
   <div id="map"></div>
 
   <!-- Leaflet -->
@@ -51,44 +72,42 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const map = L.map('map').setView([-23.55052, -46.63331], 14);
+    const map = L.map('map').setView([-23.55052, -46.63331], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap',
     }).addTo(map);
 
-    const busStopsRef = ref(db, 'busStops');
+    // Carregar pontos do Firebase
+    const busStopsRef = ref(db, "busStops");
     onValue(busStopsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        Object.values(data).forEach(({ lat, lng }) => {
-          L.marker([lat, lng])
+        Object.values(data).forEach(stop => {
+          L.marker([stop.lat, stop.lng])
             .addTo(map)
             .bindPopup("Ponto de Ônibus");
         });
       }
     });
 
-    // Localização do usuário
+    // Função de localização do usuário
     window.locateUser = () => {
-      if (!navigator.geolocation) {
-        alert("Geolocalização não suportada pelo seu navegador.");
-        return;
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            L.marker([latitude, longitude])
+              .addTo(map)
+              .bindPopup("Você está aqui!")
+              .openPopup();
+            map.setView([latitude, longitude], 15);
+          },
+          () => alert("Não foi possível acessar sua localização.")
+        );
+      } else {
+        alert("Geolocalização não suportada.");
       }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          L.marker([latitude, longitude])
-            .addTo(map)
-            .bindPopup("Você está aqui.")
-            .openPopup();
-          map.setView([latitude, longitude], 16);
-        },
-        () => {
-          alert("Não foi possível obter sua localização.");
-        }
-      );
     };
   </script>
 </body>
