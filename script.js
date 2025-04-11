@@ -26,14 +26,27 @@ function login() {
 }
 
 function register() {
-  const email = document.getElementById("email").value;
-  const senha = document.getElementById("password").value;
+  var email = document.getElementById("email").value;
+  var password = document.getElementById("password").value;
 
-  auth.createUserWithEmailAndPassword(email, senha)
-    .then(() => {
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
       alert("Usuário cadastrado com sucesso!");
     })
-    .catch(error => {
+    .catch((error) => {
       alert("Erro ao cadastrar: " + error.message);
+    });
+}
+
+function loginWithGoogle() {
+  var provider = new firebase.auth.GoogleAuthProvider();
+
+  firebase.auth().signInWithPopup(provider)
+    .then((result) => {
+      const user = result.user;
+      alert("Login com Google realizado com sucesso!\nBem-vindo(a), " + user.displayName);
+    })
+    .catch((error) => {
+      alert("Erro no login com Google: " + error.message);
     });
 }
