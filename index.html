@@ -20,7 +20,14 @@
   <!-- Firebase SDKs como módulo -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      GoogleAuthProvider,
+      signInWithPopup
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
@@ -37,15 +44,22 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
+    // Redirecionar se já estiver logado
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.location.href = "mapa.html"; // página que será mostrada se estiver logado
+      }
+    });
+
     // Tornar funções globais
     window.login = () => {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
       signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then(() => {
           alert("Login feito com sucesso!");
-          console.log("Usuário logado:", userCredential.user);
+          window.location.href = "mapa.html";
         })
         .catch((error) => {
           alert("Erro no login: " + error.message);
@@ -58,9 +72,9 @@
       const password = document.getElementById("password").value;
 
       createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then(() => {
           alert("Usuário registrado com sucesso!");
-          console.log("Usuário registrado:", userCredential.user);
+          window.location.href = "mapa.html";
         })
         .catch((error) => {
           alert("Erro no cadastro: " + error.message);
@@ -70,9 +84,9 @@
 
     window.loginGoogle = () => {
       signInWithPopup(auth, provider)
-        .then((result) => {
+        .then(() => {
           alert("Login com Google bem-sucedido!");
-          console.log("Usuário Google:", result.user);
+          window.location.href = "mapa.html";
         })
         .catch((error) => {
           alert("Erro no login com Google: " + JSON.stringify(error));
