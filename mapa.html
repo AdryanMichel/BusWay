@@ -135,5 +135,101 @@
 
     loadMarkers();
   </script>
+
+  <!-- Script da IA -->
+  <script>
+    function toggleChat() {
+      const chatBox = document.getElementById('chat-box');
+      chatBox.style.display = chatBox.style.display === 'none' ? 'flex' : 'none';
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const messages = document.getElementById('chat-messages');
+      const userText = input.value.trim();
+
+      if (!userText) return;
+
+      appendMessage("Você", userText);
+      input.value = "";
+
+      if (userText.toLowerCase().includes("perto") || userText.toLowerCase().includes("aqui")) {
+        if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition((position) => {
+            const { latitude, longitude } = position.coords;
+            const nearest = findNearestMarkers(latitude, longitude);
+            if (nearest.length > 0) {
+              appendMessage("IA", `Encontrei ${nearest.length} ponto(s) perto de você:`);
+              nearest.forEach((marker, index) => {
+                appendMessage("IA", `${index + 1}. ${marker.tipo} em Lat: ${marker.getLatLng().lat.toFixed(5)}, Lng: ${marker.getLatLng().lng.toFixed(5)}`);
+              });
+            } else {
+              appendMessage("IA", "Nenhum ponto encontrado próximo.");
+            }
+          }, () => {
+            appendMessage("IA", "Não consegui obter sua localização.");
+          });
+        } else {
+          appendMessage("IA", "Seu navegador não suporta localização.");
+        }
+      } else {
+        appendMessage("IA", "Desculpe, ainda estou aprendendo. Tente perguntar onde há pontos de ônibus perto.");
+      }
+    }
+
+    function appendMessage(sender, text) {
+      const messages = document.getElementById('chat-messages');
+      const msg = document.createElement('div');
+      msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
+      messages.appendChild(msg);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function findNearestMarkers(lat, lng, radius = 0.01) {
+      return allMarkers.filter(marker => {
+        const { lat: mLat, lng: mLng } = marker.getLatLng();
+        const distance = Math.sqrt((mLat - lat) ** 2 + (mLng - lng) ** 2);
+        return distance <= radius;
+      });
+    }
+  </script>
+  <!-- Caixa de Chat com IA -->
+<div id="chat-box" style="
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  max-height: 400px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+">
+  <div style="background:#333;color:#fff;padding:10px;">BusWay - Assistente</div>
+  <div id="chat-messages" style="flex:1;padding:10px;overflow-y:auto;font-size:14px;"></div>
+  <div style="display:flex;">
+    <input type="text" id="chat-input" placeholder="Pergunte algo..." style="flex:1;padding:8px;border:none;border-top:1px solid #ccc;" />
+    <button onclick="sendMessage()" style="padding:8px;">Enviar</button>
+  </div>
+</div>
+
+<!-- Botão para abrir o chat -->
+<button onclick="toggleChat()" style="
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+  padding: 10px 16px;
+  border-radius: 50%;
+  background: #333;
+  color: #fff;
+  font-size: 16px;
+  border: none;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+">💬
+</button>
 </body>
 </html>
