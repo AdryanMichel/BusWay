@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -18,19 +19,25 @@
       justify-content: space-between;
       align-items: center;
       padding: 10px;
+      background-color: #007bff;
+      color: white;
     }
     button {
       padding: 8px 16px;
       font-size: 14px;
       cursor: pointer;
-    }
-    .leaflet-popup-content button {
-      margin-top: 5px;
-      background-color: #ff4d4d;
-      color: white;
       border: none;
-      padding: 6px 10px;
+      background-color: #28a745;
+      color: white;
       border-radius: 4px;
+    }
+    .filter-bar {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .filter-bar button {
+      margin: 2px;
+      background-color: #17a2b8;
     }
   </style>
 </head>
@@ -40,9 +47,14 @@
     <button onclick="logout()">Sair</button>
   </div>
   <p style="text-align:center;">Clique no mapa para adicionar um ponto de ônibus.</p>
+  <div class="filter-bar">
+    <button onclick="filterMarkers('Ponto de Ônibus')">Ponto de Ônibus</button>
+    <button onclick="filterMarkers('Terminal')">Terminal</button>
+    <button onclick="filterMarkers('Estação')">Estação</button>
+    <button onclick="filterMarkers('Todos')">Todos</button>
+  </div>
   <div id="map"></div>
 
-  <!-- Firebase e lógica do app -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
@@ -69,7 +81,7 @@
         alert("Acesso não autorizado!");
         window.location.href = "index.html";
       } else {
-        initMap(); // inicializa o mapa
+        window.initMap(); 
       }
     });
 
@@ -79,66 +91,78 @@
       });
     };
 
-    window.saveBusStop = (lat, lng) => {
+    window.saveBusStop = (lat, lng, tipo = "Ponto de Ônibus") => {
       const busStopRef = ref(db, "busStops");
-      push(busStopRef, { lat, lng })
+      push(busStopRef, { lat, lng, tipo })
         .then(() => console.log("Ponto salvo"))
         .catch((error) => console.error("Erro ao salvar:", error));
     };
 
-    window.removeBusStop = (key) => {
-      const confirmDelete = confirm("Tem certeza que deseja remover este ponto?");
-      if (confirmDelete) {
-        remove(ref(db, `busStops/${key}`))
-          .then(() => alert("Ponto removido com sucesso!"))
-          .catch((error) => alert("Erro ao remover: " + error));
-      }
+    window.deleteStop = (key) => {
+      const stopRef = ref(db, `busStops/${key}`);
+      remove(stopRef)
+        .then(() => alert("Ponto deletado com sucesso"))
+        .catch((error) => console.error("Erro ao deletar:", error));
     };
 
-    function initMap() {
-      const map = L.map('map').setView([-23.55052, -46.63331], 14);
+    window.loadBusStops = (map) => {
+      const busStopRef = ref(db, "busStops");
+      onValue(busStopRef, (snapshot) => {
+        snapshot.forEach((childSnapshot) => {
+          const key = childSnapshot.key;
+          const { lat, lng, tipo } = childSnapshot.val();
+          const marker = L.marker([lat, lng]).addTo(map);
+          marker.bindPopup(`
+            ${tipo}<br>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}<br>
+            <button onclick="deleteStop('${key}')">Deletar</button>
+          `);
+          allMarkers.push(marker);
+        });
+      });
+    };
 
+    let allMarkers = [];
+    function clearMarkers(map) {
+      allMarkers.forEach(m => map.removeLayer(m));
+      allMarkers = [];
+    }
+
+    window.filterMarkers = (tipo) => {
+      clearMarkers(window.map);
+      const busStopRef = ref(db, "busStops");
+      onValue(busStopRef, (snapshot) => {
+        snapshot.forEach((childSnapshot) => {
+          const { lat, lng, tipo: tipoPonto } = childSnapshot.val();
+          if (tipo === "Todos" || tipoPonto === tipo) {
+            const marker = L.marker([lat, lng]).addTo(window.map);
+            allMarkers.push(marker);
+            marker.bindPopup(`${tipoPonto}<br>Lat: ${lat}, Lng: ${lng}`);
+          }
+        });
+      });
+    };
+  </script>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    window.initMap = function () {
+      const map = L.map('map').setView([-23.55052, -46.63331], 14);
+      window.map = map;
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap',
       }).addTo(map);
 
-      const busStopRef = ref(db, "busStops");
-
-      // Atualiza os marcadores em tempo real
-      onValue(busStopRef, (snapshot) => {
-        map.eachLayer((layer) => {
-          if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
-          }
-        });
-
-        snapshot.forEach((childSnapshot) => {
-          const key = childSnapshot.key;
-          const { lat, lng } = childSnapshot.val();
-
-          const marker = L.marker([lat, lng]).addTo(map);
-          marker.bindPopup(`
-            <strong>Ponto de Ônibus</strong><br>
-            Lat: ${lat.toFixed(5)}<br>
-            Lng: ${lng.toFixed(5)}<br>
-            <button onclick="removeBusStop('${key}')">❌ Remover</button>
-          `);
-        });
-      });
-
-      // Clique no mapa para adicionar novo ponto
       map.on('click', function (e) {
         const { lat, lng } = e.latlng;
         L.marker([lat, lng])
           .addTo(map)
-          .bindPopup(`🚌 Novo Ponto de Ônibus<br>Lat: ${lat.toFixed(5)}<br>Lng: ${lng.toFixed(5)}`)
+          .bindPopup(`Novo Ponto de Ônibus<br>Lat: ${lat.toFixed(5)}<br>Lng: ${lng.toFixed(5)}`)
           .openPopup();
-        saveBusStop(lat, lng);
+        window.saveBusStop(lat, lng);
       });
-    }
-  </script>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+      window.loadBusStops(map);
+    };
+  </script>
 </body>
 </html>
