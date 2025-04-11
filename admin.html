@@ -1,168 +1,145 @@
-
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BusWay - Painel Admin</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
   <style>
-    #map {
-      height: 90vh;
-      width: 100%;
-    }
     body {
-      font-family: sans-serif;
+      margin: 0;
+      font-family: Arial, sans-serif;
     }
-    .top-bar {
+
+    header {
+      background-color: #007bff;
+      color: white;
+      padding: 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
     }
-    button {
-      padding: 8px 16px;
-      font-size: 14px;
-      cursor: pointer;
-      border: none;
-      background-color: #28a745;
-      color: white;
-      border-radius: 4px;
+
+    #map {
+      height: 85vh;
+      width: 100%;
     }
-    .filter-bar {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    .filter-bar button {
-      margin: 2px;
-      background-color: #17a2b8;
+
+    .leaflet-popup-content-wrapper {
+      max-width: 300px !important;
     }
   </style>
 </head>
 <body>
-  <div class="top-bar">
-    <h2>Painel Administrativo</h2>
-    <button onclick="logout()">Sair</button>
-  </div>
-  <p style="text-align:center;">Clique no mapa para adicionar um ponto de ônibus.</p>
-  <div class="filter-bar">
-    <button onclick="filterMarkers('Ponto de Ônibus')">Ponto de Ônibus</button>
-    <button onclick="filterMarkers('Terminal')">Terminal</button>
-    <button onclick="filterMarkers('Estação')">Estação</button>
-    <button onclick="filterMarkers('Todos')">Todos</button>
-  </div>
-  <div id="map"></div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+<header>
+  <h4>BusWay - Painel Admin</h4>
+  <button class="btn btn-light" onclick="logout()">Sair</button>
+</header>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
-      authDomain: "busway-4df70.firebaseapp.com",
-      databaseURL: "https://busway-4df70-default-rtdb.firebaseio.com",
-      projectId: "busway-4df70",
-      storageBucket: "busway-4df70.appspot.com",
-      messagingSenderId: "688309345550",
-      appId: "1:688309345550:web:761e34139b05a1f8578b5f",
-      measurementId: "G-94KF7CBDLZ"
-    };
+<div class="container mt-2">
+  <p class="text-center">Clique no mapa para adicionar um ponto de ônibus.</p>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-    const adminEmail = "adryanmichel.profissional@gmail.com";
+<div id="map"></div>
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user || user.email !== adminEmail) {
-        alert("Acesso não autorizado!");
-        window.location.href = "index.html";
-      } else {
-        window.initMap(); 
-      }
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
+    authDomain: "busway-4df70.firebaseapp.com",
+    databaseURL: "https://busway-4df70-default-rtdb.firebaseio.com",
+    projectId: "busway-4df70",
+    storageBucket: "busway-4df70.appspot.com",
+    messagingSenderId: "688309345550",
+    appId: "1:688309345550:web:761e34139b05a1f8578b5f",
+    measurementId: "G-94KF7CBDLZ"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const database = firebase.database();
+  const adminEmail = "adryanmichel.profissional@gmail.com";
+
+  auth.onAuthStateChanged((user) => {
+    if (!user || user.email !== adminEmail) {
+      alert("Acesso não autorizado!");
+      window.location.href = "index.html";
+    } else {
+      initMap();
+    }
+  });
+
+  function logout() {
+    auth.signOut().then(() => {
+      window.location.href = "index.html";
+    });
+  }
+
+  function initMap() {
+    const map = L.map("map").setView([-23.55052, -46.63331], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // Carregar pontos existentes
+    const pontosRef = database.ref("pontos");
+    pontosRef.on("value", (snapshot) => {
+      map.eachLayer((layer) => {
+        if (layer instanceof L.Marker) map.removeLayer(layer);
+      });
+
+      snapshot.forEach((child) => {
+        const ponto = child.val();
+        const marker = L.marker([ponto.latitude, ponto.longitude])
+          .addTo(map)
+          .bindPopup(`
+            <b>${ponto.tipo}</b><br>${ponto.descricao || ""}
+            <br><br>
+            <button class="btn btn-sm btn-warning" onclick="editarPonto('${child.key}', ${ponto.latitude}, ${ponto.longitude})">Editar</button>
+            <button class="btn btn-sm btn-danger" onclick="deletarPonto('${child.key}')">Deletar</button>
+          `);
+      });
     });
 
-    window.logout = () => {
-      signOut(auth).then(() => {
-        window.location.href = "index.html";
-      });
-    };
+    // Adicionar novo ponto
+    map.on("click", function (e) {
+      const tipo = prompt("Tipo do ponto (Ponto de Ônibus, Terminal, Estação):");
+      const descricao = prompt("Descrição:");
+      if (!tipo) return;
 
-    window.saveBusStop = (lat, lng, tipo = "Ponto de Ônibus") => {
-      const busStopRef = ref(db, "busStops");
-      push(busStopRef, { lat, lng, tipo })
-        .then(() => console.log("Ponto salvo"))
-        .catch((error) => console.error("Erro ao salvar:", error));
-    };
+      const novoPonto = {
+        latitude: e.latlng.lat,
+        longitude: e.latlng.lng,
+        tipo: tipo,
+        descricao: descricao
+      };
 
-    window.deleteStop = (key) => {
-      const stopRef = ref(db, `busStops/${key}`);
-      remove(stopRef)
-        .then(() => alert("Ponto deletado com sucesso"))
-        .catch((error) => console.error("Erro ao deletar:", error));
-    };
+      pontosRef.push(novoPonto);
+    });
+  }
 
-    window.loadBusStops = (map) => {
-      const busStopRef = ref(db, "busStops");
-      onValue(busStopRef, (snapshot) => {
-        snapshot.forEach((childSnapshot) => {
-          const key = childSnapshot.key;
-          const { lat, lng, tipo } = childSnapshot.val();
-          const marker = L.marker([lat, lng]).addTo(map);
-          marker.bindPopup(`
-            ${tipo}<br>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}<br>
-            <button onclick="deleteStop('${key}')">Deletar</button>
-          `);
-          allMarkers.push(marker);
-        });
-      });
-    };
-
-    let allMarkers = [];
-    function clearMarkers(map) {
-      allMarkers.forEach(m => map.removeLayer(m));
-      allMarkers = [];
+  function deletarPonto(key) {
+    if (confirm("Deseja mesmo deletar este ponto?")) {
+      firebase.database().ref("pontos/" + key).remove();
     }
+  }
 
-    window.filterMarkers = (tipo) => {
-      clearMarkers(window.map);
-      const busStopRef = ref(db, "busStops");
-      onValue(busStopRef, (snapshot) => {
-        snapshot.forEach((childSnapshot) => {
-          const { lat, lng, tipo: tipoPonto } = childSnapshot.val();
-          if (tipo === "Todos" || tipoPonto === tipo) {
-            const marker = L.marker([lat, lng]).addTo(window.map);
-            allMarkers.push(marker);
-            marker.bindPopup(`${tipoPonto}<br>Lat: ${lat}, Lng: ${lng}`);
-          }
-        });
+  function editarPonto(key, lat, lng) {
+    const novoTipo = prompt("Novo tipo:");
+    const novaDesc = prompt("Nova descrição:");
+    if (novoTipo) {
+      firebase.database().ref("pontos/" + key).update({
+        tipo: novoTipo,
+        descricao: novaDesc
       });
-    };
-  </script>
+    }
+  }
+</script>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    window.initMap = function () {
-      const map = L.map('map').setView([-23.55052, -46.63331], 14);
-      window.map = map;
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
-      }).addTo(map);
-
-      map.on('click', function (e) {
-        const { lat, lng } = e.latlng;
-        L.marker([lat, lng])
-          .addTo(map)
-          .bindPopup(`Novo Ponto de Ônibus<br>Lat: ${lat.toFixed(5)}<br>Lng: ${lng.toFixed(5)}`)
-          .openPopup();
-        window.saveBusStop(lat, lng);
-      });
-
-      window.loadBusStops(map);
-    };
-  </script>
 </body>
 </html>
