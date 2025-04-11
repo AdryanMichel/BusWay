@@ -57,12 +57,12 @@
 
   <div id="map"></div>
 
-  <!-- Firebase + Leaflet -->
+  <!-- Leaflet + Firebase -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js"></script>
 
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
       authDomain: "busway-4df70.firebaseapp.com",
@@ -73,8 +73,8 @@
       appId: "1:688309345550:web:761e34139b05a1f8578b5f"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     const map = L.map("map").setView([-23.55052, -46.63331], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -83,11 +83,11 @@
 
     let allMarkers = [];
 
-    window.loadMarkers = () => {
+    function loadMarkers() {
       clearMarkers();
+      const busStopRef = db.ref("busStops");
 
-      const busStopRef = ref(db, "busStops");
-      onValue(busStopRef, (snapshot) => {
+      busStopRef.on("value", (snapshot) => {
         const data = snapshot.val();
         if (data) {
           Object.values(data).forEach(({ lat, lng, tipo = 'onibus' }) => {
@@ -99,14 +99,14 @@
           });
         }
       });
-    };
+    }
 
-    window.clearMarkers = () => {
+    function clearMarkers() {
       allMarkers.forEach(marker => map.removeLayer(marker));
       allMarkers = [];
-    };
+    }
 
-    window.filterMarkers = (tipo) => {
+    function filterMarkers(tipo) {
       allMarkers.forEach(marker => {
         if (marker.tipo === tipo) {
           marker.addTo(map);
@@ -114,9 +114,9 @@
           map.removeLayer(marker);
         }
       });
-    };
+    }
 
-    window.locateUser = () => {
+    function locateUser() {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition((position) => {
           const { latitude, longitude } = position.coords;
@@ -131,12 +131,18 @@
       } else {
         alert("Geolocalização não suportada.");
       }
-    };
+    }
+
+    // Expor funções para HTML
+    window.loadMarkers = loadMarkers;
+    window.clearMarkers = clearMarkers;
+    window.filterMarkers = filterMarkers;
+    window.locateUser = locateUser;
 
     loadMarkers();
   </script>
 
-  <!-- Script da IA -->
+  <!-- Chat da IA -->
   <script>
     function toggleChat() {
       const chatBox = document.getElementById('chat-box');
@@ -193,43 +199,44 @@
       });
     }
   </script>
-  <!-- Caixa de Chat com IA -->
-<div id="chat-box" style="
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 300px;
-  max-height: 400px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-">
-  <div style="background:#333;color:#fff;padding:10px;">BusWay - Assistente</div>
-  <div id="chat-messages" style="flex:1;padding:10px;overflow-y:auto;font-size:14px;"></div>
-  <div style="display:flex;">
-    <input type="text" id="chat-input" placeholder="Pergunte algo..." style="flex:1;padding:8px;border:none;border-top:1px solid #ccc;" />
-    <button onclick="sendMessage()" style="padding:8px;">Enviar</button>
-  </div>
-</div>
 
-<!-- Botão para abrir o chat -->
-<button onclick="toggleChat()" style="
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 999;
-  padding: 10px 16px;
-  border-radius: 50%;
-  background: #333;
-  color: #fff;
-  font-size: 16px;
-  border: none;
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
-">💬
-</button>
+  <!-- Caixa de Chat com IA -->
+  <div id="chat-box" style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    max-height: 400px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  ">
+    <div style="background:#333;color:#fff;padding:10px;">BusWay - Assistente</div>
+    <div id="chat-messages" style="flex:1;padding:10px;overflow-y:auto;font-size:14px;"></div>
+    <div style="display:flex;">
+      <input type="text" id="chat-input" placeholder="Pergunte algo..." style="flex:1;padding:8px;border:none;border-top:1px solid #ccc;" />
+      <button onclick="sendMessage()" style="padding:8px;">Enviar</button>
+    </div>
+  </div>
+
+  <!-- Botão para abrir o chat -->
+  <button onclick="toggleChat()" style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999;
+    padding: 10px 16px;
+    border-radius: 50%;
+    background: #333;
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  ">💬</button>
+
 </body>
 </html>
