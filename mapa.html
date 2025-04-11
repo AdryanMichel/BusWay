@@ -4,18 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BusWay - Pontos de Ônibus</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
   />
   <style>
-    #map { height: 90vh; width: 100%; }
-    body { font-family: sans-serif; }
+    #map { height: 100%; }
   </style>
 </head>
-<body>
-  <h2 style="text-align: center;">Pontos de Ônibus (Mapa ao Vivo)</h2>
-  <div id="map"></div>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    <!-- Lista lateral -->
+    <div class="w-1/3 bg-white p-4 overflow-y-auto shadow-lg">
+      <h2 class="text-2xl font-bold mb-4">🚌 Pontos de Ônibus</h2>
+      <button onclick="toggleMarkers()" class="bg-blue-500 text-white px-4 py-2 rounded mb-4 hover:bg-blue-600 transition">
+        Mostrar/Ocultar no Mapa
+      </button>
+      <ul id="listaPontos" class="space-y-2 text-gray-700"></ul>
+    </div>
+
+    <!-- Mapa -->
+    <div id="map" class="w-2/3"></div>
+  </div>
 
   <!-- Leaflet -->
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
@@ -25,7 +36,7 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script>
-    // Configuração do Firebase
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
       authDomain: "busway-4df70.firebaseapp.com",
@@ -37,24 +48,49 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // Inicializar o mapa
     const map = L.map("map").setView([-23.5505, -46.6333], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors"
     }).addTo(map);
 
-    // Buscar pontos de ônibus do Firebase
+    let markers = [];
+
+    // Buscar pontos no Firebase
     firebase.database().ref("pontos_onibus").on("value", snapshot => {
       const data = snapshot.val();
-
       if (!data) return;
 
-      Object.values(data).forEach(ponto => {
-        L.marker([ponto.lat, ponto.lng])
+      // Limpar marcadores anteriores
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      const lista = document.getElementById("listaPontos");
+      lista.innerHTML = "";
+
+      Object.entries(data).forEach(([id, ponto]) => {
+        const marker = L.marker([ponto.lat, ponto.lng])
           .addTo(map)
           .bindPopup(`<b>${ponto.nome}</b>`);
+        markers.push(marker);
+
+        const item = document.createElement("li");
+        item.textContent = ponto.nome;
+        lista.appendChild(item);
       });
     });
+
+    // Função para mostrar ou esconder os marcadores
+    let markersVisiveis = true;
+    function toggleMarkers() {
+      markersVisiveis = !markersVisiveis;
+      markers.forEach(marker => {
+        if (markersVisiveis) {
+          marker.addTo(map);
+        } else {
+          map.removeLayer(marker);
+        }
+      });
+    }
   </script>
 </body>
 </html>
