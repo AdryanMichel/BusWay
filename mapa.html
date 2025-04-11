@@ -2,30 +2,40 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BusWay - Mapa</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BusWay - Mapa de Ônibus</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
     #map {
-      height: 90vh;
+      height: 100vh;
       width: 100%;
     }
-    button {
-      margin: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
+    .locate-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      padding: 10px 15px;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 4px;
       cursor: pointer;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <button onclick="logout()">Sair</button>
+  <button class="locate-btn" onclick="locateUser()">📍 Minha Localização</button>
   <div id="map"></div>
 
-  <!-- Firebase + Auth -->
+  <!-- Leaflet -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
@@ -39,51 +49,47 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-    // Verifica se está logado
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        alert("Você precisa estar logado.");
-        window.location.href = "index.html";
-      } else {
-        initMap(); // inicia o mapa se estiver logado
+    const map = L.map('map').setView([-23.55052, -46.63331], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+    }).addTo(map);
+
+    const busStopsRef = ref(db, 'busStops');
+    onValue(busStopsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        Object.values(data).forEach(({ lat, lng }) => {
+          L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup("Ponto de Ônibus");
+        });
       }
     });
 
-    // Logout
-    window.logout = () => {
-      signOut(auth).then(() => {
-        alert("Você saiu da conta.");
-        window.location.href = "index.html";
-      });
+    // Localização do usuário
+    window.locateUser = () => {
+      if (!navigator.geolocation) {
+        alert("Geolocalização não suportada pelo seu navegador.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          L.marker([latitude, longitude])
+            .addTo(map)
+            .bindPopup("Você está aqui.")
+            .openPopup();
+          map.setView([latitude, longitude], 16);
+        },
+        () => {
+          alert("Não foi possível obter sua localização.");
+        }
+      );
     };
-  </script>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    function initMap() {
-      const map = L.map('map').setView([-23.55052, -46.63331], 14); // Centro SP
-
-      // Tile do mapa (OpenStreetMap gratuito)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
-      }).addTo(map);
-
-      // Pontos de ônibus simulados
-      const pontos = [
-        [-23.55052, -46.63331],
-        [-23.55100, -46.63800],
-        [-23.55200, -46.64000]
-      ];
-
-      pontos.forEach((ponto) => {
-        L.marker(ponto)
-          .addTo(map)
-          .bindPopup("Ponto de Ônibus");
-      });
-    }
   </script>
 </body>
 </html>
