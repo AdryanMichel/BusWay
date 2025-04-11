@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BusWay - Mapa com Leaflet</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    integrity="sha256-sA+e2f+u6olOqA1Wh+rkA3U+P3tWvY0Ax9jYh4xPp3s="
+    crossorigin=""
+  />
+  <style>
+    #map {
+      height: 90vh;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align: center;">Mapa de Pontos de Ônibus (Leaflet)</h2>
+  <div id="map"></div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+    integrity="sha256-o9N1j8REp5zHc27yG2rD+UEi3ZLvwuQTHks0nTmFLH0="
+    crossorigin=""
+  ></script>
+  <script>
+    const map = L.map('map').setView([-23.5505, -46.6333], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const pontos = [
+      { lat: -23.5505, lng: -46.6333, nome: "Terminal Central" },
+      { lat: -23.5489, lng: -46.6388, nome: "Parada 2" },
+      { lat: -23.5522, lng: -46.6400, nome: "Parada 3" }
+    ];
+
+    pontos.forEach(ponto => {
+      L.marker([ponto.lat, ponto.lng])
+        .addTo(map)
+        .bindPopup(`<b>${ponto.nome}</b>`);
+    });
+  </script>
+</body>
+</html>
