@@ -1,4 +1,3 @@
-// Inicialização Firebase usando módulos compatíveis com CDN
 const firebaseConfig = {
   apiKey: "AIzaSyA-UgOXLstg1j8MBpLndSu1S2HqXRc6c",
   authDomain: "busway-4df70.firebaseapp.com",
@@ -10,11 +9,9 @@ const firebaseConfig = {
   measurementId: "G-94KF7C5DLZ"
 };
 
-// Inicializa o Firebase App
-const app = firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
-// Login
 function login() {
   const email = document.getElementById("email").value;
   const senha = document.getElementById("password").value;
@@ -22,14 +19,12 @@ function login() {
   auth.signInWithEmailAndPassword(email, senha)
     .then(() => {
       alert("Login realizado com sucesso!");
-      // redirecionar ou mostrar painel
     })
     .catch(error => {
       alert("Erro ao logar: " + error.message);
     });
 }
 
-// Cadastro
 function register() {
   const email = document.getElementById("email").value;
   const senha = document.getElementById("password").value;
