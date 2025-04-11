@@ -1,42 +1,136 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BusWay - Mapa</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f9f9;
     }
+
     #map {
-      height: 90vh;
+      height: calc(100vh - 110px);
       width: 100%;
+      z-index: 1;
     }
+
     .top-bar {
+      background: #007bff;
+      color: white;
+      padding: 12px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px;
-      background: #eee;
     }
+
+    .top-bar h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .top-bar button {
+      background: white;
+      color: #007bff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
     .controls {
       display: flex;
+      justify-content: center;
       flex-wrap: wrap;
       gap: 10px;
-      margin: 10px;
-      justify-content: center;
+      padding: 10px 20px;
+      background: #e9ecef;
     }
-    button {
-      padding: 8px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      border: 1px solid #ccc;
+
+    .controls button {
       background: #fff;
-      border-radius: 4px;
+      border: 1px solid #ccc;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .controls button:hover {
+      background: #f0f0f0;
+    }
+
+    /* Chat Box */
+    #chat-box {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 320px;
+      height: 400px;
+      display: none;
+      flex-direction: column;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+      overflow: hidden;
+      z-index: 999;
+    }
+
+    #chat-box header {
+      background: #007bff;
+      color: white;
+      padding: 10px;
+      font-weight: bold;
+    }
+
+    #chat-messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    #chat-input {
+      padding: 10px;
+      border: none;
+      border-top: 1px solid #ddd;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #chat-box button {
+      border: none;
+      background: #007bff;
+      color: white;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .chat-footer {
+      display: flex;
+    }
+
+    /* Chat Toggle Button */
+    #chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      padding: 14px;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
     }
   </style>
 </head>
@@ -57,7 +151,18 @@
 
   <div id="map"></div>
 
-  <!-- Leaflet + Firebase -->
+  <!-- Chatbox -->
+  <div id="chat-box">
+    <header>BusWay - Assistente</header>
+    <div id="chat-messages"></div>
+    <div class="chat-footer">
+      <input type="text" id="chat-input" placeholder="Pergunte algo..." onkeydown="if(event.key==='Enter')sendMessage()" />
+      <button onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+  <button id="chat-toggle" onclick="toggleChat()">💬</button>
+
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js"></script>
@@ -76,18 +181,16 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const map = L.map("map").setView([-23.55052, -46.63331], 13);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
+    const map = L.map('map').setView([-23.55052, -46.63331], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
     }).addTo(map);
 
     let allMarkers = [];
 
     function loadMarkers() {
       clearMarkers();
-      const busStopRef = db.ref("busStops");
-
-      busStopRef.on("value", (snapshot) => {
+      db.ref("busStops").once("value").then(snapshot => {
         const data = snapshot.val();
         if (data) {
           Object.values(data).forEach(({ lat, lng, tipo = 'onibus' }) => {
@@ -102,7 +205,7 @@
     }
 
     function clearMarkers() {
-      allMarkers.forEach(marker => map.removeLayer(marker));
+      allMarkers.forEach(m => map.removeLayer(m));
       allMarkers = [];
     }
 
@@ -117,126 +220,70 @@
     }
 
     function locateUser() {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition((position) => {
-          const { latitude, longitude } = position.coords;
-          L.marker([latitude, longitude])
-            .addTo(map)
-            .bindPopup("Você está aqui!")
-            .openPopup();
-          map.setView([latitude, longitude], 15);
-        }, () => {
-          alert("Não foi possível obter sua localização.");
-        });
-      } else {
-        alert("Geolocalização não suportada.");
-      }
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        L.marker([latitude, longitude])
+          .addTo(map)
+          .bindPopup("Você está aqui!")
+          .openPopup();
+        map.setView([latitude, longitude], 15);
+      }, () => alert("Não foi possível localizar você."));
     }
 
-    // Expor funções para HTML
+    // Expor funções
     window.loadMarkers = loadMarkers;
-    window.clearMarkers = clearMarkers;
     window.filterMarkers = filterMarkers;
     window.locateUser = locateUser;
 
     loadMarkers();
   </script>
 
-  <!-- Chat da IA -->
+  <!-- Chat Script -->
   <script>
     function toggleChat() {
-      const chatBox = document.getElementById('chat-box');
-      chatBox.style.display = chatBox.style.display === 'none' ? 'flex' : 'none';
+      const box = document.getElementById('chat-box');
+      box.style.display = box.style.display === 'flex' ? 'none' : 'flex';
     }
 
     function sendMessage() {
       const input = document.getElementById('chat-input');
-      const messages = document.getElementById('chat-messages');
-      const userText = input.value.trim();
-
-      if (!userText) return;
-
-      appendMessage("Você", userText);
+      const text = input.value.trim();
+      if (!text) return;
+      appendMessage("Você", text);
       input.value = "";
 
-      if (userText.toLowerCase().includes("perto") || userText.toLowerCase().includes("aqui")) {
-        if ("geolocation" in navigator) {
-          navigator.geolocation.getCurrentPosition((position) => {
-            const { latitude, longitude } = position.coords;
-            const nearest = findNearestMarkers(latitude, longitude);
-            if (nearest.length > 0) {
-              appendMessage("IA", `Encontrei ${nearest.length} ponto(s) perto de você:`);
-              nearest.forEach((marker, index) => {
-                appendMessage("IA", `${index + 1}. ${marker.tipo} em Lat: ${marker.getLatLng().lat.toFixed(5)}, Lng: ${marker.getLatLng().lng.toFixed(5)}`);
-              });
-            } else {
-              appendMessage("IA", "Nenhum ponto encontrado próximo.");
-            }
-          }, () => {
-            appendMessage("IA", "Não consegui obter sua localização.");
+      if (text.toLowerCase().includes("perto")) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          const { latitude, longitude } = pos.coords;
+          const nearest = allMarkers.filter(marker => {
+            const { lat, lng } = marker.getLatLng();
+            const dist = Math.sqrt((lat - latitude) ** 2 + (lng - longitude) ** 2);
+            return dist < 0.01;
           });
-        } else {
-          appendMessage("IA", "Seu navegador não suporta localização.");
-        }
+
+          if (nearest.length > 0) {
+            appendMessage("IA", `Encontrei ${nearest.length} ponto(s) próximo(s):`);
+            nearest.forEach((m, i) => {
+              appendMessage("IA", `${i + 1}. ${m.tipo} em Lat: ${m.getLatLng().lat.toFixed(5)}, Lng: ${m.getLatLng().lng.toFixed(5)}`);
+            });
+          } else {
+            appendMessage("IA", "Nenhum ponto próximo encontrado.");
+          }
+        }, () => {
+          appendMessage("IA", "Não foi possível localizar você.");
+        });
       } else {
-        appendMessage("IA", "Desculpe, ainda estou aprendendo. Tente perguntar onde há pontos de ônibus perto.");
+        appendMessage("IA", "Desculpe, estou aprendendo! Tente perguntar se há pontos de ônibus perto.");
       }
     }
 
-    function appendMessage(sender, text) {
-      const messages = document.getElementById('chat-messages');
-      const msg = document.createElement('div');
-      msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
-      messages.appendChild(msg);
-      messages.scrollTop = messages.scrollHeight;
-    }
-
-    function findNearestMarkers(lat, lng, radius = 0.01) {
-      return allMarkers.filter(marker => {
-        const { lat: mLat, lng: mLng } = marker.getLatLng();
-        const distance = Math.sqrt((mLat - lat) ** 2 + (mLng - lng) ** 2);
-        return distance <= radius;
-      });
+    function appendMessage(sender, msg) {
+      const div = document.createElement("div");
+      div.innerHTML = `<strong>${sender}:</strong> ${msg}`;
+      document.getElementById("chat-messages").appendChild(div);
+      document.getElementById("chat-messages").scrollTop = document.getElementById("chat-messages").scrollHeight;
     }
   </script>
-
-  <!-- Caixa de Chat com IA -->
-  <div id="chat-box" style="
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 300px;
-    max-height: 400px;
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  ">
-    <div style="background:#333;color:#fff;padding:10px;">BusWay - Assistente</div>
-    <div id="chat-messages" style="flex:1;padding:10px;overflow-y:auto;font-size:14px;"></div>
-    <div style="display:flex;">
-      <input type="text" id="chat-input" placeholder="Pergunte algo..." style="flex:1;padding:8px;border:none;border-top:1px solid #ccc;" />
-      <button onclick="sendMessage()" style="padding:8px;">Enviar</button>
-    </div>
-  </div>
-
-  <!-- Botão para abrir o chat -->
-  <button onclick="toggleChat()" style="
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999;
-    padding: 10px 16px;
-    border-radius: 50%;
-    background: #333;
-    color: #fff;
-    font-size: 16px;
-    border: none;
-    box-shadow: 0 0 5px rgba(0,0,0,0.3);
-  ">💬</button>
 
 </body>
 </html>
