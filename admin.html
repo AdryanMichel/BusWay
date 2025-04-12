@@ -22,7 +22,7 @@
     }
 
     #map {
-      height: 85vh;
+      height: 70vh;
       width: 100%;
     }
 
@@ -32,6 +32,42 @@
 
     .btn-outline-light {
       margin-right: 10px;
+    }
+
+    .alert-custom {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .btn-action {
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .btn-action:hover {
+      background-color: #0056b3;
+      transform: scale(1.05);
+    }
+
+    .card-custom {
+      margin-top: 20px;
+      transition: transform 0.3s ease;
+    }
+
+    .card-custom:hover {
+      transform: scale(1.05);
+    }
+
+    .container {
+      margin-top: 2rem;
+    }
+
+    /* Design Responsivo */
+    @media (max-width: 768px) {
+      #map {
+        height: 60vh;
+      }
     }
   </style>
 </head>
@@ -45,11 +81,44 @@
   </div>
 </header>
 
-<div class="container mt-2">
-  <p class="text-center">Clique no mapa para adicionar um ponto de ônibus.</p>
+<div class="container">
+  <div class="row">
+    <div class="col-md-4">
+      <!-- Card para adicionar pontos -->
+      <div class="card card-custom">
+        <div class="card-body">
+          <h5 class="card-title">Adicionar Ponto</h5>
+          <p class="card-text">Clique no mapa para adicionar um ponto de ônibus, terminal ou estação.</p>
+          <button class="btn btn-primary btn-action" onclick="ativarAdicionarPonto()">Adicionar</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <!-- Card para editar pontos -->
+      <div class="card card-custom">
+        <div class="card-body">
+          <h5 class="card-title">Editar Ponto</h5>
+          <p class="card-text">Clique sobre um ponto para editá-lo.</p>
+          <button class="btn btn-warning btn-action" onclick="editarPonto()">Editar</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <!-- Card para excluir pontos -->
+      <div class="card card-custom">
+        <div class="card-body">
+          <h5 class="card-title">Excluir Ponto</h5>
+          <p class="card-text">Clique sobre um ponto para deletá-lo.</p>
+          <button class="btn btn-danger btn-action" onclick="deletarPonto()">Excluir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="map"></div>
 </div>
 
-<div id="map"></div>
+<div id="alert-container"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
@@ -110,8 +179,8 @@
           .bindPopup(`
             <b>${ponto.tipo}</b><br>${ponto.descricao || ""}
             <br><br>
-            <button class="btn btn-sm btn-warning" onclick="editarPonto('${child.key}', ${ponto.latitude}, ${ponto.longitude})">Editar</button>
-            <button class="btn btn-sm btn-danger" onclick="deletarPonto('${child.key}')">Deletar</button>
+            <button class="btn btn-sm btn-warning btn-action" onclick="editarPonto('${child.key}', ${ponto.latitude}, ${ponto.longitude})">Editar</button>
+            <button class="btn btn-sm btn-danger btn-action" onclick="deletarPonto('${child.key}')">Deletar</button>
           `);
       });
     });
@@ -129,12 +198,14 @@
       };
 
       pontosRef.push(novoPonto);
+      showAlert("Ponto de ônibus adicionado com sucesso!", "success");
     });
   }
 
   function deletarPonto(key) {
     if (confirm("Deseja mesmo deletar este ponto?")) {
       firebase.database().ref("pontos/" + key).remove();
+      showAlert("Ponto deletado com sucesso!", "danger");
     }
   }
 
@@ -146,7 +217,24 @@
         tipo: novoTipo,
         descricao: novaDesc
       });
+      showAlert("Ponto editado com sucesso!", "info");
     }
+  }
+
+  function showAlert(message, type) {
+    const alertContainer = document.getElementById("alert-container");
+    const alertDiv = document.createElement("div");
+    alertDiv.classList.add("alert", `alert-${type}`, "alert-custom");
+    alertDiv.innerText = message;
+    alertContainer.appendChild(alertDiv);
+
+    setTimeout(() => {
+      alertDiv.remove();
+    }, 3000);
+  }
+
+  function ativarAdicionarPonto() {
+    alert("Clique no mapa para adicionar um ponto!");
   }
 </script>
 
