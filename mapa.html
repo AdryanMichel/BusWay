@@ -11,8 +11,6 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background-color: #1e1e1e;
-      color: #fff;
     }
     #map {
       height: 100vh;
@@ -89,23 +87,20 @@
       z-index: 1000;
       width: 250px;
     }
-    #themeSwitch {
+    .theme-toggle {
       position: absolute;
       top: 10px;
       left: 80px;
       z-index: 1000;
-      background-color: #343a40;
-      color: #fff;
-      border: none;
-      padding: 8px;
-      border-radius: 5px;
     }
   </style>
 </head>
 <body>
 
-  <button id="themeSwitch" onclick="toggleTheme()">Alterar Tema</button>
+  <!-- Botão de alternância de tema -->
+  <button class="btn btn-secondary theme-toggle" id="themeToggleBtn"><i class="bi bi-moon"></i></button>
 
+  <!-- Dropdown de tipo de ponto -->
   <div class="dropdown">
     <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
       <i class="bi bi-funnel-fill"></i> Tipo de ponto
@@ -117,11 +112,13 @@
     </ul>
   </div>
 
+  <!-- Campo de busca -->
   <div id="searchBar">
     <input id="addressInput" class="form-control" type="text" placeholder="Buscar endereço...">
     <button class="btn btn-outline-light mt-2 w-100" onclick="buscarEndereco()"><i class="bi bi-search"></i> Buscar</button>
   </div>
 
+  <!-- Botões flutuantes -->
   <div class="floating-buttons">
     <button class="btn btn-primary" onclick="getUserLocation()"><i class="bi bi-geo-alt-fill"></i> Minha localização</button>
     <button class="btn btn-success" onclick="loadBusStops()"><i class="bi bi-arrow-clockwise"></i> Recarregar</button>
@@ -129,8 +126,10 @@
     <a class="btn btn-info" href="admin.html"><i class="bi bi-lock-fill"></i> Painel Admin</a>
   </div>
 
+  <!-- Mapa -->
   <div id="map"></div>
 
+  <!-- Caixa de chat -->
   <div id="chat">
     <div id="messages"></div>
     <input type="text" id="userInput" class="form-control" placeholder="Digite sua pergunta...">
@@ -143,6 +142,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
@@ -161,6 +161,16 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
+
+    // Função para alternar o tema
+    document.getElementById("themeToggleBtn").addEventListener("click", () => {
+      const body = document.body;
+      const theme = body.getAttribute('data-bs-theme');
+      body.setAttribute('data-bs-theme', theme === 'dark' ? 'light' : 'dark');
+      const icon = document.getElementById("themeToggleBtn").querySelector("i");
+      icon.classList.toggle("bi-sun");
+      icon.classList.toggle("bi-moon");
+    });
 
     function getUserLocation() {
       if (navigator.geolocation) {
@@ -238,10 +248,25 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function toggleTheme() {
-      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-      document.documentElement.setAttribute('data-bs-theme', currentTheme === 'dark' ? 'light' : 'dark');
+    function buscarEndereco() {
+      const endereco = document.getElementById('addressInput').value;
+      if (!endereco) return;
+
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.length > 0) {
+            const { lat, lon } = data[0];
+            map.setView([parseFloat(lat), parseFloat(lon)], 16, { animate: true });
+            L.marker([lat, lon]).addTo(map).bindPopup('Endereço encontrado').openPopup();
+          } else {
+            alert('Endereço não encontrado');
+          }
+        });
     }
+
+    loadBusStops();
+    getUserLocation();
   </script>
 </body>
 </html>
