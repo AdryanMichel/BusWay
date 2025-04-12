@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mapa de Pontos de Ônibus - BusWay</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
@@ -15,7 +15,6 @@
     #map {
       height: 100vh;
       z-index: 1;
-      transition: transform 0.3s ease;
     }
     .floating-buttons {
       position: absolute;
@@ -27,7 +26,7 @@
       z-index: 1000;
     }
     .floating-buttons button, .floating-buttons a {
-      transition: transform 0.2s ease, background-color 0.2s ease;
+      transition: transform 0.2s ease;
     }
     .floating-buttons button:hover, .floating-buttons a:hover {
       transform: scale(1.05);
@@ -74,7 +73,7 @@
       background: #2c2c2c;
       color: white;
     }
-    .dropdown {
+    .dropdown, .theme-toggle {
       position: absolute;
       top: 10px;
       left: 10px;
@@ -87,24 +86,44 @@
       z-index: 1000;
       width: 250px;
     }
-    .theme-toggle {
-      position: absolute;
-      top: 20px;
-      left: 10px;
-      z-index: 1000;
+
+    @media (max-width: 768px) {
+      #chat {
+        width: 100%;
+        right: 0;
+        bottom: 0;
+        height: 300px;
+        border-radius: 0;
+      }
+
+      .floating-buttons {
+        right: 0;
+        left: 0;
+        bottom: 310px;
+        top: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px;
+        z-index: 1000;
+      }
+
+      .dropdown, .theme-toggle, #searchBar {
+        position: static;
+        margin: 10px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Botão de troca de tema -->
   <button class="btn btn-light theme-toggle" id="theme-toggle">
     <i class="bi bi-moon-fill"></i> Modo Escuro
   </button>
 
-  <!-- Filtro de tipo de ponto -->
   <div class="dropdown">
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
       <i class="bi bi-funnel-fill"></i> Tipo de ponto
     </button>
     <ul class="dropdown-menu">
@@ -114,24 +133,22 @@
     </ul>
   </div>
 
-  <!-- Barra de busca de endereço -->
   <div id="searchBar">
     <input id="addressInput" class="form-control" type="text" placeholder="Buscar endereço...">
-    <button class="btn btn-outline-light mt-2 w-100 " onclick="buscarEndereco()"><i class="bi bi-search"></i> Buscar</button>
+    <button class="btn btn-outline-light mt-2 w-100" onclick="buscarEndereco()">
+      <i class="bi bi-search"></i> Buscar
+    </button>
   </div>
 
-  <!-- Botões flutuantes -->
   <div class="floating-buttons">
-    <button class="btn btn-primary" onclick="getUser Location()"><i class="bi bi-geo-alt-fill"></i> Minha localização</button>
+    <button class="btn btn-primary" onclick="getUserLocation()"><i class="bi bi-geo-alt-fill"></i> Minha localização</button>
     <button class="btn btn-success" onclick="loadBusStops()"><i class="bi bi-arrow-clockwise"></i> Recarregar</button>
     <a class="btn btn-warning" href="horario.html"><i class="bi bi-clock-history"></i> Horários</a>
     <a class="btn btn-info" href="admin.html"><i class="bi bi-lock-fill"></i> Painel Admin</a>
   </div>
 
-  <!-- Mapa -->
   <div id="map"></div>
 
-  <!-- Chat -->
   <div id="chat">
     <div id="messages"></div>
     <input type="text" id="userInput" class="form-control" placeholder="Digite sua pergunta...">
@@ -140,21 +157,19 @@
 
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
+      apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
       authDomain: "busway-4df70.firebaseapp.com",
       databaseURL: "https://busway-4df70-default-rtdb.firebaseio.com",
       projectId: "busway-4df70",
       storageBucket: "busway-4df70.appspot.com",
       messagingSenderId: "688309345550",
-      appId: "1:688309345550:web:761e34139b05a1f8578b5f",
-      measurementId: "G-94KF7CBDLZ"
+      appId: "1:688309345550:web:761e34139b05a1f8578b5f"
     };
     const app = firebase.initializeApp(firebaseConfig);
     const database = firebase.database(app);
@@ -166,16 +181,17 @@
 
     let pontosMarkers = [];
 
-    function getUser Location() {
+    function getUserLocation() {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
+        navigator.geolocation.getCurrentPosition(position => {
           const lat = position.coords.latitude;
           const lon = position.coords.longitude;
-          map.setView([lat, lon], 15, { animate: true });
-          L.marker([lat, lon]).addTo(map)
-            .bindPopup('Você está aqui!').openPopup();
+          map.setView([lat, lon], 15);
+          L.marker([lat, lon]).addTo(map).bindPopup('Você está aqui!').openPopup();
         }, () => alert("Erro ao obter localização."));
-      } else alert("Geolocalização não suportada pelo seu navegador.");
+      } else {
+        alert("Geolocalização não suportada.");
+      }
     }
 
     function loadBusStops(type = '') {
@@ -200,6 +216,32 @@
       loadBusStops(type);
     }
 
+    function buscarEndereco() {
+      const endereco = document.getElementById('addressInput').value;
+      if (!endereco) return;
+
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.length > 0) {
+            const { lat, lon } = data[0];
+            map.setView([parseFloat(lat), parseFloat(lon)], 16);
+            L.marker([lat, lon]).addTo(map).bindPopup('Endereço encontrado').openPopup();
+          } else {
+            alert('Endereço não encontrado');
+          }
+        });
+    }
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-bs-theme') === 'dark';
+      html.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
+      document.getElementById('theme-toggle').innerHTML = isDark
+        ? '<i class="bi bi-moon-fill"></i> Modo Escuro'
+        : '<i class="bi bi-sun-fill"></i> Modo Claro';
+    });
+
     async function enviarMensagem() {
       const input = document.getElementById('userInput');
       const chat = document.getElementById('messages');
@@ -213,7 +255,7 @@
 
       const respostaMsg = document.createElement('div');
       respostaMsg.className = 'message ia-msg';
-      respostaMsg .textContent = 'IA: ... pensando ...';
+      respostaMsg.textContent = 'IA: ... pensando ...';
       chat.appendChild(respostaMsg);
 
       input.value = '';
@@ -224,7 +266,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer YOUR_API_KEY`
+            "Authorization": `Bearer SUA_CHAVE_OPENAI_AQUI`
           },
           body: JSON.stringify({
             model: "gpt-3.5-turbo",
@@ -242,34 +284,8 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function buscarEndereco() {
-      const endereco = document.getElementById('addressInput').value;
-      if (!endereco) return;
-
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.length > 0) {
-            const { lat, lon } = data[0];
-            map.setView([parseFloat(lat), parseFloat(lon)], 16, { animate: true });
-            L.marker([lat, lon]).addTo(map).bindPopup('Endereço encontrado').openPopup();
-          } else {
-            alert('Endereço não encontrado');
-          }
-        });
-    }
-
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const html = document.documentElement;
-      const isDark = html.getAttribute('data-bs-theme') === 'dark';
-      html.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
-      document.getElementById('theme-toggle').innerHTML = isDark
-        ? '<i class="bi bi-moon-fill"></i> Modo Escuro'
-        : '<i class="bi bi-sun-fill"></i> Modo Claro';
-    });
-
     loadBusStops();
-    getUser Location();
+    getUserLocation();
   </script>
 </body>
 </html>
