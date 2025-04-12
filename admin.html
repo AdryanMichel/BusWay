@@ -15,7 +15,7 @@
     header {
       background-color: #007bff;
       color: white;
-      padding: 1rem;
+      padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -29,13 +29,20 @@
     .leaflet-popup-content-wrapper {
       max-width: 300px !important;
     }
+
+    .btn-outline-light {
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <h4>BusWay - Painel Admin</h4>
-  <button class="btn btn-light" onclick="logout()">Sair</button>
+  <h4 class="m-0">BusWay - Painel Admin</h4>
+  <div>
+    <button class="btn btn-outline-light me-2" onclick="voltarMapa()">Mapa Público</button>
+    <button class="btn btn-light" onclick="logout()">Sair</button>
+  </div>
 </header>
 
 <div class="container mt-2">
@@ -80,13 +87,16 @@
     });
   }
 
+  function voltarMapa() {
+    window.location.href = "mapa.html";
+  }
+
   function initMap() {
     const map = L.map("map").setView([-23.55052, -46.63331], 13);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Carregar pontos existentes
     const pontosRef = database.ref("pontos");
     pontosRef.on("value", (snapshot) => {
       map.eachLayer((layer) => {
@@ -106,7 +116,6 @@
       });
     });
 
-    // Adicionar novo ponto
     map.on("click", function (e) {
       const tipo = prompt("Tipo do ponto (Ponto de Ônibus, Terminal, Estação):");
       const descricao = prompt("Descrição:");
