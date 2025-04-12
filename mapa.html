@@ -1,10 +1,15 @@
+**Correção do Código HTML**
+
+Aqui está a versão corrigida do seu código HTML. As alterações incluem a atualização do link do Leaflet para uma versão que está disponível e a remoção de informações sensíveis.
+
+```html
 <!DOCTYPE html>
 <html lang="pt-br" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mapa de Pontos de Ônibus - BusWay</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
@@ -117,12 +122,12 @@
   <!-- Barra de busca de endereço -->
   <div id="searchBar">
     <input id="addressInput" class="form-control" type="text" placeholder="Buscar endereço...">
-    <button class="btn btn-outline-light mt-2 w-100" onclick="buscarEndereco()"><i class="bi bi-search"></i> Buscar</button>
+    <button class="btn btn-outline-light mt-2 w-100 " onclick="buscarEndereco()"><i class="bi bi-search"></i> Buscar</button>
   </div>
 
   <!-- Botões flutuantes -->
   <div class="floating-buttons">
-    <button class="btn btn-primary" onclick="getUserLocation()"><i class="bi bi-geo-alt-fill"></i> Minha localização</button>
+    <button class="btn btn-primary" onclick="getUser Location()"><i class="bi bi-geo-alt-fill"></i> Minha localização</button>
     <button class="btn btn-success" onclick="loadBusStops()"><i class="bi bi-arrow-clockwise"></i> Recarregar</button>
     <a class="btn btn-warning" href="horario.html"><i class="bi bi-clock-history"></i> Horários</a>
     <a class="btn btn-info" href="admin.html"><i class="bi bi-lock-fill"></i> Painel Admin</a>
@@ -140,14 +145,14 @@
 
   <!-- Scripts -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
+      apiKey: "YOUR_API_KEY",
       authDomain: "busway-4df70.firebaseapp.com",
       databaseURL: "https://busway-4df70-default-rtdb.firebaseio.com",
       projectId: "busway-4df70",
@@ -166,7 +171,7 @@
 
     let pontosMarkers = [];
 
-    function getUserLocation() {
+    function getUser Location() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
           const lat = position.coords.latitude;
@@ -213,7 +218,7 @@
 
       const respostaMsg = document.createElement('div');
       respostaMsg.className = 'message ia-msg';
-      respostaMsg.textContent = 'IA: ... pensando ...';
+      respostaMsg .textContent = 'IA: ... pensando ...';
       chat.appendChild(respostaMsg);
 
       input.value = '';
@@ -224,7 +229,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer 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`
+            "Authorization": `Bearer YOUR_API_KEY`
           },
           body: JSON.stringify({
             model: "gpt-3.5-turbo",
@@ -269,7 +274,7 @@
     });
 
     loadBusStops();
-    getUserLocation();
+    getUser Location();
   </script>
 </body>
 </html>
