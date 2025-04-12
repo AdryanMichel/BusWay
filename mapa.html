@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br" data-bs-theme="dark">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -181,8 +181,9 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
@@ -292,7 +293,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer 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`
+            "Authorization": `Bearer SUA_CHAVE_OPENAI_AQUI`
           },
           body: JSON.stringify({
             model: "gpt-3.5-turbo",
