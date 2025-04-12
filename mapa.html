@@ -216,24 +216,51 @@
         .catch(() => alert("Erro ao buscar o endereço."));
     }
 
-    function enviarMensagem() {
+    async function enviarMensagem() {
       const input = document.getElementById("userInput");
       const chat = document.getElementById("chat");
       const texto = input.value.trim();
       if (!texto) return;
 
+      // Mostrar pergunta do usuário
       const userMsg = document.createElement("div");
       userMsg.innerHTML = `<strong>Você:</strong> ${texto}`;
       chat.appendChild(userMsg);
 
-      let resposta = "Desculpe, ainda estou aprendendo.";
-      if (texto.toLowerCase().includes("ponto") && texto.toLowerCase().includes("perto")) {
-        resposta = "Use o botão 📍 'Sua Localização' acima para ver os pontos próximos!";
-      }
+      // Mostrar mensagem inicial de "pensando..."
+      const respostaMsg = document.createElement("div");
+      respostaMsg.innerHTML = `<strong>IA:</strong> ... pensando ...`;
+      chat.appendChild(respostaMsg);
+      chat.scrollTop = chat.scrollHeight;
 
-      const botMsg = document.createElement("div");
-      botMsg.innerHTML = `<strong>IA:</strong> ${resposta}`;
-      chat.appendChild(botMsg);
+      try {
+        // Chamar a OpenAI
+        const apiKey = "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"; // substitua pela sua chave
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [
+              { role: "system", content: "Você é um assistente chamado BusWay que ajuda as pessoas a encontrarem pontos de ônibus, terminais e estações na cidade." },
+              { role: "user", content: texto }
+            ]
+          })
+        });
+
+        const data = await response.json();
+        const resposta = data.choices[0].message.content;
+
+        // Atualizar a resposta da IA com o resultado da OpenAI
+        respostaMsg.innerHTML = `<strong>IA:</strong> ${resposta}`;
+      } catch (error) {
+        // Se houver erro ao chamar a API
+        respostaMsg.innerHTML = `<strong>IA:</strong> Erro ao se comunicar com o servidor.`;
+        console.error("Erro ao acessar OpenAI:", error);
+      }
 
       input.value = "";
       chat.scrollTop = chat.scrollHeight;
