@@ -8,56 +8,31 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
-    html, body {
-      height: 100%;
+    body {
       margin: 0;
+      font-family: 'Segoe UI', sans-serif;
     }
-
-    /* O mapa deve ocupar toda a altura da tela */
     #map {
       height: 100vh;
+      z-index: 1;
     }
-
-    /* Estilo para os botões flutuantes sobre o mapa */
     .floating-buttons {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 10px;
+      right: 10px;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      z-index: 1000; /* Garantir que os botões fiquem acima do mapa */
+      z-index: 1000;
     }
-
     .floating-buttons button, .floating-buttons a {
-      transition: transform 0.2s ease;
-      width: 180px; /* Largura fixa para os botões */
+      transition: transform 0.2s ease, background-color 0.3s ease;
+      border-radius: 5px;
     }
-
     .floating-buttons button:hover, .floating-buttons a:hover {
       transform: scale(1.05);
+      background-color: #0056b3;
     }
-
-    /* Ajustes para dispositivos móveis */
-    @media (max-width: 768px) {
-      .floating-buttons {
-        top: 50%;
-        right: 10px;
-        left: 10px;
-        bottom: 10px;
-        flex-direction: row;
-        justify-content: space-between;
-        gap: 10px;
-        padding: 5px;
-      }
-
-      /* Ajustando a largura dos botões para caber no dispositivo */
-      .floating-buttons button, .floating-buttons a {
-        width: 45%; /* Botões vão ocupar 45% da largura em dispositivos móveis */
-      }
-    }
-
-    /* Estilos de chat */
     #chat {
       position: absolute;
       bottom: 10px;
@@ -73,31 +48,28 @@
       flex-direction: column;
       z-index: 999;
     }
-
     #messages {
       flex-grow: 1;
       overflow-y: auto;
       margin-bottom: 10px;
     }
-
     .message {
       margin: 8px 0;
       padding: 8px;
       border-radius: 8px;
     }
-
     .user-msg {
       background-color: #0d6efd;
       color: white;
       align-self: flex-end;
+      border-radius: 12px;
     }
-
     .ia-msg {
       background-color: #343a40;
       color: white;
       align-self: flex-start;
+      border-radius: 12px;
     }
-
     #userInput {
       border-radius: 5px;
       padding: 8px;
@@ -105,29 +77,76 @@
       background: #2c2c2c;
       color: white;
     }
-
-    /* Estilo para o campo de busca */
+    .dropdown, .theme-toggle {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+    }
     #searchBar {
       position: absolute;
-      top: 20px;
+      top: 70px;
       left: 10px;
       z-index: 1000;
       width: 250px;
     }
 
-    /* Estilos para o botão de tema na parte inferior */
-    #theme-toggle {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
+    @media (max-width: 768px) {
+      #chat {
+        width: 100%;
+        right: 0;
+        bottom: 0;
+        height: 300px;
+        border-radius: 0;
+      }
+
+      .floating-buttons {
+        right: 0;
+        left: 0;
+        bottom: 310px;
+        top: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px;
+        z-index: 1000;
+      }
+
+      .dropdown, .theme-toggle, #searchBar {
+        position: static;
+        margin: 10px;
+      }
+    }
+
+    /* Adicionando estilo aos botões de tema */
+    .btn-light {
+      background-color: #343a40;
+      color: white;
+    }
+    .btn-light:hover {
+      background-color: #0056b3;
+      color: white;
     }
   </style>
 </head>
 <body>
 
-  <!-- Campo de busca -->
+  <button class="btn btn-light theme-toggle" id="theme-toggle">
+    <i class="bi bi-moon-fill"></i> Modo Escuro
+  </button>
+
+  <div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+      <i class="bi bi-funnel-fill"></i> Tipo de ponto
+    </button>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item" href="#" onclick="filterPoints('onibus')">Ônibus</a></li>
+      <li><a class="dropdown-item" href="#" onclick="filterPoints('terminal')">Terminal</a></li>
+      <li><a class="dropdown-item" href="#" onclick="filterPoints('estacao')">Estação</a></li>
+    </ul>
+  </div>
+
   <div id="searchBar">
     <input id="addressInput" class="form-control" type="text" placeholder="Buscar endereço...">
     <button class="btn btn-outline-light mt-2 w-100" onclick="buscarEndereco()">
@@ -135,10 +154,6 @@
     </button>
   </div>
 
-  <!-- Mapa -->
-  <div id="map"></div>
-
-  <!-- Botões flutuantes -->
   <div class="floating-buttons">
     <button class="btn btn-primary" onclick="getUserLocation()"><i class="bi bi-geo-alt-fill"></i> Minha localização</button>
     <button class="btn btn-success" onclick="loadBusStops()"><i class="bi bi-arrow-clockwise"></i> Recarregar</button>
@@ -146,12 +161,8 @@
     <a class="btn btn-info" href="admin.html"><i class="bi bi-lock-fill"></i> Painel Admin</a>
   </div>
 
-  <!-- Botão de alternância de tema na parte inferior -->
-  <button class="btn btn-light theme-toggle" id="theme-toggle">
-    <i class="bi bi-moon-fill"></i> Modo Escuro
-  </button>
+  <div id="map"></div>
 
-  <!-- Chat -->
   <div id="chat">
     <div id="messages"></div>
     <input type="text" id="userInput" class="form-control" placeholder="Digite sua pergunta...">
@@ -177,48 +188,48 @@
     const app = firebase.initializeApp(firebaseConfig);
     const database = firebase.database(app);
 
-    // Criando o mapa
     const map = L.map('map').setView([-23.5505, -46.6333], 13);
-    
-    // Carregando o tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Função para pegar localização do usuário
+    let pontosMarkers = [];
+
     function getUserLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(position => {
           const lat = position.coords.latitude;
           const lon = position.coords.longitude;
-          map.setView([lat, lon], 15); // Ajustando o mapa para a localização do usuário
-          L.marker([lat, lon]).addTo(map).bindPopup('Você está aqui!').openPopup(); // Marcando a posição do usuário
+          map.setView([lat, lon], 15);
+          L.marker([lat, lon]).addTo(map).bindPopup('Você está aqui!').openPopup();
         }, () => alert("Erro ao obter localização."));
       } else {
         alert("Geolocalização não suportada.");
       }
     }
 
-    // Carregando os pontos de ônibus do Firebase
-    function loadBusStops() {
+    function loadBusStops(type = '') {
+      pontosMarkers.forEach(m => map.removeLayer(m));
+      pontosMarkers = [];
+
       database.ref('pontos').once('value', snapshot => {
         const pontos = snapshot.val();
-        if (pontos) {
-          for (let id in pontos) {
-            const p = pontos[id];
-            // Adicionando marcadores no mapa para cada ponto de ônibus
-            L.marker([p.latitude, p.longitude])
+        for (let id in pontos) {
+          const p = pontos[id];
+          if (!type || p.tipo === type) {
+            const marker = L.marker([p.latitude, p.longitude])
               .addTo(map)
               .bindPopup(`<strong>${p.nome}</strong><br>${p.tipo}<br>${p.descricao || 'Sem descrição'}`);
+            pontosMarkers.push(marker);
           }
         }
       });
     }
 
-    loadBusStops(); // Carregar pontos de ônibus no mapa
-    getUserLocation(); // Obter localização do usuário
+    function filterPoints(type) {
+      loadBusStops(type);
+    }
 
-    // Função para buscar endereço usando Nominatim API
     function buscarEndereco() {
       const endereco = document.getElementById('addressInput').value;
       if (!endereco) return;
@@ -236,15 +247,59 @@
         });
     }
 
-    // Alternando entre modo claro e escuro
     document.getElementById('theme-toggle').addEventListener('click', () => {
       const html = document.documentElement;
       const isDark = html.getAttribute('data-bs-theme') === 'dark';
       html.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
       document.getElementById('theme-toggle').innerHTML = isDark
-        ? '<i class="bi bi-sun-fill"></i> Modo Claro'
-        : '<i class="bi bi-moon-fill"></i> Modo Escuro';
+        ? '<i class="bi bi-moon-fill"></i> Modo Escuro'
+        : '<i class="bi bi-sun-fill"></i> Modo Claro';
     });
+
+    async function enviarMensagem() {
+      const input = document.getElementById('userInput');
+      const chat = document.getElementById('messages');
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user-msg';
+      userMsg.innerHTML = `Você: ${texto}`;
+      chat.appendChild(userMsg);
+
+      const respostaMsg = document.createElement('div');
+      respostaMsg.className = 'message ia-msg';
+      respostaMsg.textContent = 'IA: ... pensando ...';
+      chat.appendChild(respostaMsg);
+
+      input.value = '';
+      chat.scrollTop = chat.scrollHeight;
+
+      try {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer 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`
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [
+              { role: "system", content: "Você é um assistente que ajuda a encontrar pontos de ônibus e informações do BusWay." },
+              { role: "user", content: texto }
+            ]
+          })
+        });
+        const data = await response.json();
+        respostaMsg.textContent = `IA: ${data.choices[0].message.content}`;
+      } catch (err) {
+        respostaMsg.textContent = 'IA: Erro ao obter resposta.';
+      }
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    loadBusStops();
+    getUserLocation();
   </script>
 </body>
 </html>
