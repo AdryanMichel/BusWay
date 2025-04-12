@@ -83,12 +83,19 @@
       left: 10px;
       z-index: 1000;
     }
+    .form-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
     #searchBar {
       position: absolute;
       top: 70px;
       left: 10px;
       z-index: 1000;
-      width: 250px;
+      width: 500px;
+      display: flex;
+      gap: 10px;
     }
 
     @media (max-width: 768px) {
@@ -132,24 +139,25 @@
 </head>
 <body>
 
+  <!-- Botão de Modo Claro/Escuro -->
   <button class="btn btn-light theme-toggle" id="theme-toggle">
     <i class="bi bi-moon-fill"></i> Modo Escuro
   </button>
 
-  <div class="dropdown">
-    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-      <i class="bi bi-funnel-fill"></i> Tipo de ponto
-    </button>
-    <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="#" onclick="filterPoints('onibus')">Ônibus</a></li>
-      <li><a class="dropdown-item" href="#" onclick="filterPoints('terminal')">Terminal</a></li>
-      <li><a class="dropdown-item" href="#" onclick="filterPoints('estacao')">Estação</a></li>
-    </ul>
-  </div>
+  <div id="searchBar" class="form-group">
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-funnel-fill"></i> Tipo de ponto
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#" onclick="filterPoints('onibus')">Ônibus</a></li>
+        <li><a class="dropdown-item" href="#" onclick="filterPoints('terminal')">Terminal</a></li>
+        <li><a class="dropdown-item" href="#" onclick="filterPoints('estacao')">Estação</a></li>
+      </ul>
+    </div>
 
-  <div id="searchBar">
     <input id="addressInput" class="form-control" type="text" placeholder="Buscar endereço...">
-    <button class="btn btn-outline-light mt-2 w-100" onclick="buscarEndereco()">
+    <button class="btn btn-outline-light" onclick="buscarEndereco()">
       <i class="bi bi-search"></i> Buscar
     </button>
   </div>
@@ -280,7 +288,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer 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`
+            "Authorization": `Bearer SUA_CHAVE_OPENAI_AQUI`
           },
           body: JSON.stringify({
             model: "gpt-3.5-turbo",
