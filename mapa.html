@@ -11,6 +11,8 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1e1e;
+      color: #fff;
     }
     #map {
       height: 100vh;
@@ -87,9 +89,22 @@
       z-index: 1000;
       width: 250px;
     }
+    #themeSwitch {
+      position: absolute;
+      top: 10px;
+      left: 80px;
+      z-index: 1000;
+      background-color: #343a40;
+      color: #fff;
+      border: none;
+      padding: 8px;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
+
+  <button id="themeSwitch" onclick="toggleTheme()">Alterar Tema</button>
 
   <div class="dropdown">
     <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
@@ -223,25 +238,10 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function buscarEndereco() {
-      const endereco = document.getElementById('addressInput').value;
-      if (!endereco) return;
-
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.length > 0) {
-            const { lat, lon } = data[0];
-            map.setView([parseFloat(lat), parseFloat(lon)], 16, { animate: true });
-            L.marker([lat, lon]).addTo(map).bindPopup('Endereço encontrado').openPopup();
-          } else {
-            alert('Endereço não encontrado');
-          }
-        });
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+      document.documentElement.setAttribute('data-bs-theme', currentTheme === 'dark' ? 'light' : 'dark');
     }
-
-    loadBusStops();
-    getUserLocation();
   </script>
 </body>
 </html>
