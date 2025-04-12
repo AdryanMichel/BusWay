@@ -87,20 +87,23 @@
       z-index: 1000;
       width: 250px;
     }
+    /* Estilos para botão de troca de tema */
     .theme-toggle {
       position: absolute;
-      top: 10px;
-      left: 80px;
+      top: 20px;
+      left: 10px;
       z-index: 1000;
     }
   </style>
 </head>
 <body>
 
-  <!-- Botão de alternância de tema -->
-  <button class="btn btn-secondary theme-toggle" id="themeToggleBtn"><i class="bi bi-moon"></i></button>
+  <!-- Botão de troca de tema -->
+  <button class="btn btn-light theme-toggle" id="theme-toggle">
+    <i class="bi bi-moon"></i> Modo Escuro
+  </button>
 
-  <!-- Dropdown de tipo de ponto -->
+  <!-- Filtro de tipo de ponto -->
   <div class="dropdown">
     <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
       <i class="bi bi-funnel-fill"></i> Tipo de ponto
@@ -112,7 +115,7 @@
     </ul>
   </div>
 
-  <!-- Campo de busca -->
+  <!-- Barra de busca de endereço -->
   <div id="searchBar">
     <input id="addressInput" class="form-control" type="text" placeholder="Buscar endereço...">
     <button class="btn btn-outline-light mt-2 w-100" onclick="buscarEndereco()"><i class="bi bi-search"></i> Buscar</button>
@@ -129,7 +132,7 @@
   <!-- Mapa -->
   <div id="map"></div>
 
-  <!-- Caixa de chat -->
+  <!-- Chat -->
   <div id="chat">
     <div id="messages"></div>
     <input type="text" id="userInput" class="form-control" placeholder="Digite sua pergunta...">
@@ -142,7 +145,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
@@ -161,16 +163,6 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
-
-    // Função para alternar o tema
-    document.getElementById("themeToggleBtn").addEventListener("click", () => {
-      const body = document.body;
-      const theme = body.getAttribute('data-bs-theme');
-      body.setAttribute('data-bs-theme', theme === 'dark' ? 'light' : 'dark');
-      const icon = document.getElementById("themeToggleBtn").querySelector("i");
-      icon.classList.toggle("bi-sun");
-      icon.classList.toggle("bi-moon");
-    });
 
     function getUserLocation() {
       if (navigator.geolocation) {
@@ -230,7 +222,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer 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`
+            "Authorization": `Bearer YOUR_API_KEY_HERE`
           },
           body: JSON.stringify({
             model: "gpt-3.5-turbo",
