@@ -1,0 +1,103 @@
+/* Resetando estilos e definindo uma base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    padding-bottom: 50px; /* Espaço para o rodapé */
+}
+
+header {
+    background-color: #0056b3;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.search-container {
+    margin-top: 10px;
+}
+
+.search-container input {
+    padding: 8px;
+    width: 100%;
+    max-width: 400px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+}
+
+/* Seção principal com horários */
+#horarios {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.linha {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    transition: all 0.3s ease-in-out;
+}
+
+.linha h2 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+h3, h4 {
+    font-size: 1.2rem;
+    margin-top: 10px;
+}
+
+ul {
+    list-style-type: none;
+}
+
+ul li {
+    font-size: 1rem;
+    margin: 5px 0;
+}
+
+footer {
+    text-align: center;
+    background-color: #333;
+    color: white;
+    padding: 15px;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    h3, h4 {
+        font-size: 1rem;
+    }
+
+    .search-container input {
+        max-width: 100%;
+    }
+}
