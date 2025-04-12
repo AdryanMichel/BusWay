@@ -1,353 +1,195 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BusWay - Pontos Públicos</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Pontos de Ônibus - BusWay</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" />
   <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f7fa;
-    }
-
-    header {
-      background-color: #0d6efd;
-      color: white;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #0056b3;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-    }
-
-    header:hover {
-      background-color: #0056b3;
-    }
-
-    #menu {
-      padding: 15px 20px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      background-color: #ffffff;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      margin: 10px;
-    }
-
-    #map {
-      height: calc(100vh - 240px);
-      width: 100%;
-      transition: opacity 0.5s ease;
-      opacity: 1;
-    }
-
-    #chat-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 320px;
-      background: #fff;
-      border-radius: 15px;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
-      z-index: 1000;
-      transform: translateY(50px);
-      opacity: 0;
-      animation: slideUp 0.5s forwards;
-    }
-
-    @keyframes slideUp {
-      from {
-        transform: translateY(50px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .chatbot-header {
-      background-color: #0d6efd;
-      color: white;
-      padding: 12px;
-      font-weight: bold;
-      font-size: 16px;
-      border-bottom: 2px solid #0056b3;
-      transition: background-color 0.3s ease;
-    }
-
-    .chatbot-header:hover {
-      background-color: #0056b3;
-    }
-
-    .chatbot-messages {
-      height: 200px;
-      overflow-y: auto;
+    #map { height: 100vh; }
+    #chat {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 300px;
+      height: 400px;
+      background-color: white;
+      border: 1px solid #ccc;
       padding: 10px;
-      animation: fadeIn 1s ease-in-out;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
     }
-
-    @keyframes fadeIn {
-      0% { opacity: 0; }
-      100% { opacity: 1; }
+    #chat input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
     }
-
-    .chatbot-input {
-      display: flex;
-      border-top: 1px solid #ddd;
-      background-color: #f7f7f7;
+    #chat button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
     }
-
-    .chatbot-input input {
-      border: none;
-      padding: 12px;
-      flex: 1;
-      border-radius: 0;
-      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
+    .message {
+      margin: 10px 0;
     }
-
-    .chatbot-input input:focus {
-      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+    .message strong {
+      font-weight: bold;
     }
-
-    .chatbot-input button {
-      background: #0d6efd;
-      color: white;
-      border: none;
-      padding: 12px 18px;
-      cursor: pointer;
-      border-radius: 0 15px 15px 0;
-      box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-    }
-
-    .chatbot-input button:hover {
-      background: #0056b3;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Botões do menu */
-    #menu button {
-      transition: transform 0.2s ease, background-color 0.2s ease;
-    }
-
-    #menu button:hover {
-      background-color: #0056b3;
-      transform: translateY(-3px);
-    }
-
-    #menu .form-control {
-      transition: all 0.3s ease;
-    }
-
-    #menu .form-control:focus {
-      box-shadow: 0 0 5px rgba(13, 110, 253, 0.6);
+    .dropdown {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <div><strong>BusWay - Pontos Públicos</strong></div>
-    <button id="btnAdmin" class="btn btn-light d-none">Painel Admin</button>
-  </header>
-
-  <div id="menu">
-    <button class="btn btn-primary btn-sm" onclick="filterMarkers('Ponto de Ônibus')">Ponto de Ônibus</button>
-    <button class="btn btn-primary btn-sm" onclick="filterMarkers('Terminal')">Terminal</button>
-    <button class="btn btn-primary btn-sm" onclick="filterMarkers('Estação')">Estação</button>
-    <button class="btn btn-outline-secondary btn-sm" onclick="centralizarUsuario()">📍 Sua Localização</button>
-    <button class="btn btn-outline-secondary btn-sm" onclick="loadMarkers()">🔄 Recarregar Pontos</button>
-    <div class="input-group" style="max-width: 300px;">
-      <input type="text" id="searchInput" class="form-control" placeholder="Digite um endereço...">
-      <button class="btn btn-secondary" onclick="buscarEndereco()">🔍</button>
-    </div>
+  <div class="dropdown">
+    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+      Selecione o tipo de ponto
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+      <li><a class="dropdown-item" href="#" onclick="filterPoints('onibus')">Ônibus</a></li>
+      <li><a class="dropdown-item" href="#" onclick="filterPoints('terminal')">Terminal</a></li>
+      <li><a class="dropdown-item" href="#" onclick="filterPoints('estacao')">Estação</a></li>
+    </ul>
   </div>
 
   <div id="map"></div>
 
-  <div id="chat-container">
-    <div class="chatbot-header">🧠 Assistente BusWay</div>
-    <div class="chatbot-messages" id="chat">
-      <div><strong>Você:</strong> onde está os pontos de onibus?</div>
-      <div><strong>IA:</strong> Use o botão 📍 'Sua Localização' para ver os pontos mais próximos.</div>
-    </div>
-    <div class="chatbot-input">
-      <input type="text" id="userInput" placeholder="Pergunte algo..." />
-      <button onclick="enviarMensagem()">💬</button>
-    </div>
+  <div id="chat">
+    <div id="messages"></div>
+    <input type="text" id="userInput" placeholder="Digite sua pergunta...">
+    <button onclick="enviarMensagem()">Enviar</button>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/openai/1.1.2/openai.min.js"></script>
+  
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
-      authDomain: "busway-4df70.firebaseapp.com",
-      projectId: "busway-4df70",
-      storageBucket: "busway-4df70.appspot.com",
-      messagingSenderId: "688309345550",
-      appId: "1:688309345550:web:761e34139b05a1f8578b5f"
-    };
+    // Configuração do Firebase
+ const firebaseConfig = {
+    apiKey: "AIzaSyA-UgQXLtsg1tj0MBpLndSuJiS2hqXRc6c",
+    authDomain: "busway-4df70.firebaseapp.com",
+    databaseURL: "https://busway-4df70-default-rtdb.firebaseio.com",
+    projectId: "busway-4df70",
+    storageBucket: "busway-4df70.appspot.com",
+    messagingSenderId: "688309345550",
+    appId: "1:688309345550:web:761e34139b05a1f8578b5f",
+    measurementId: "G-94KF7CBDLZ"
+  };
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database(app);
 
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    const auth = firebase.auth();
+    // Inicializar o mapa
+    const map = L.map('map').setView([-23.5505, -46.6333], 13); // Posição inicial (São Paulo)
 
-    const map = L.map("map").setView([-23.55052, -46.633308], 13);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '© OpenStreetMap'
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    let allMarkers = [];
-
-    function loadMarkers() {
-      clearMarkers();
-      database.ref("pontos").once("value", (snapshot) => {
-        snapshot.forEach((childSnapshot) => {
-          const ponto = childSnapshot.val();
-          const marker = L.marker([ponto.latitude, ponto.longitude])
-            .addTo(map)
-            .bindPopup(`<b>${ponto.tipo}</b><br>${ponto.descricao || ''}`);
-          marker.tipo = ponto.tipo;
-          allMarkers.push(marker);
+    // Função para obter a localização do usuário e centralizar o mapa
+    function getUserLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          map.setView([lat, lon], 13);
+          L.marker([lat, lon]).addTo(map)
+            .bindPopup('Você está aqui!')
+            .openPopup();
+        }, function() {
+          alert("Erro ao obter localização.");
         });
+      } else {
+        alert("Geolocalização não suportada pelo seu navegador.");
+      }
+    }
+
+    // Função para carregar os pontos de ônibus no mapa
+    function loadBusStops(type = '') {
+      database.ref('pontos').once('value', function(snapshot) {
+        const pontos = snapshot.val();
+        for (let pontoId in pontos) {
+          const ponto = pontos[pontoId];
+          if (type === '' || ponto.tipo === type) {
+            const lat = ponto.latitude;
+            const lon = ponto.longitude;
+            const nome = ponto.nome;
+            const tipo = ponto.tipo;
+            const descricao = ponto.descricao || 'Sem descrição';
+
+            // Adicionar marcador no mapa
+            L.marker([lat, lon]).addTo(map)
+              .bindPopup(`<strong>${nome}</strong><br>${tipo}<br>${descricao}`);
+          }
+        }
       });
     }
 
-    function clearMarkers() {
-      allMarkers.forEach((m) => map.removeLayer(m));
-      allMarkers = [];
-    }
-
-    function filterMarkers(tipo) {
-      clearMarkers();
-      database.ref("pontos").once("value", (snapshot) => {
-        snapshot.forEach((childSnapshot) => {
-          const ponto = childSnapshot.val();
-          if (ponto.tipo === tipo) {
-            const marker = L.marker([ponto.latitude, ponto.longitude])
-              .addTo(map)
-              .bindPopup(`<b>${ponto.tipo}</b><br>${ponto.descricao || ''}`);
-            marker.tipo = ponto.tipo;
-            allMarkers.push(marker);
-          }
-        });
+    // Filtrar pontos com base no tipo
+    function filterPoints(type) {
+      map.eachLayer(function(layer) {
+        if (layer instanceof L.Marker) {
+          map.removeLayer(layer);
+        }
       });
+      loadBusStops(type);
     }
 
-    function centralizarUsuario() {
-      if (!navigator.geolocation) return alert("Geolocalização não suportada.");
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          map.setView([latitude, longitude], 15);
-          L.marker([latitude, longitude]).addTo(map)
-            .bindPopup("📍 Você está aqui")
-            .openPopup();
-        },
-        () => alert("Não foi possível obter sua localização.")
-      );
-    }
-
-    function buscarEndereco() {
-      const endereco = document.getElementById("searchInput").value;
-      if (!endereco) return alert("Digite um endereço para buscar!");
-
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.length === 0) {
-            alert("Endereço não encontrado!");
-            return;
-          }
-
-          const { lat, lon, display_name } = data[0];
-          L.marker([lat, lon])
-            .addTo(map)
-            .bindPopup(`📍 ${display_name}`)
-            .openPopup();
-
-          map.setView([lat, lon], 16);
-        })
-        .catch(() => alert("Erro ao buscar o endereço."));
-    }
-
+    // Função do chat IA
     async function enviarMensagem() {
-      const input = document.getElementById("userInput");
-      const chat = document.getElementById("chat");
+      const input = document.getElementById('userInput');
+      const chat = document.getElementById('messages');
       const texto = input.value.trim();
       if (!texto) return;
 
       // Mostrar pergunta do usuário
-      const userMsg = document.createElement("div");
+      const userMsg = document.createElement('div');
+      userMsg.classList.add('message');
       userMsg.innerHTML = `<strong>Você:</strong> ${texto}`;
       chat.appendChild(userMsg);
 
-      // Mostrar mensagem inicial de "pensando..."
-      const respostaMsg = document.createElement("div");
+      // Mensagem de "pensando..."
+      const respostaMsg = document.createElement('div');
+      respostaMsg.classList.add('message');
       respostaMsg.innerHTML = `<strong>IA:</strong> ... pensando ...`;
       chat.appendChild(respostaMsg);
-      chat.scrollTop = chat.scrollHeight;
 
-      try {
-        // Chamar a OpenAI
-        const apiKey = "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"; // substitua pela sua chave
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [
-              { role: "system", content: "Você é um assistente chamado BusWay que ajuda as pessoas a encontrarem pontos de ônibus, terminais e estações na cidade." },
-              { role: "user", content: texto }
-            ]
-          })
-        });
-        const data = await response.json();
-        console.log(data); // Adicione esta linha para depuração
-        const resposta = data.choices[0].message.content;
+      input.value = '';
 
-  // Atualizar a resposta da IA com o resultado da OpenAI
-       respostaMsg.innerHTML = `<strong>IA:</strong> ${resposta}`;
-       } catch (error) {
-        respostaMsg.innerHTML = `<strong>IA:</strong> Erro ao se comunicar com o servidor.`;
-      console.error("Erro ao acessar OpenAI:", error);
-      }
-      input.value = "";
+      // Chamar a OpenAI para obter a resposta
+      const apiKey = "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"; // substitua pela sua chave
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "system", content: "Você é um assistente que ajuda as pessoas a encontrar pontos de ônibus." },
+            { role: "user", content: texto }
+          ]
+        })
+      });
+      const data = await response.json();
+      const resposta = data.choices[0].message.content;
+
+      respostaMsg.innerHTML = `<strong>IA:</strong> ${resposta}`;
       chat.scrollTop = chat.scrollHeight;
     }
 
-    // Exibir botão "Painel Admin" apenas para o admin logado
-    const adminEmail = "adryanmichel.profissional@gmail.com";
-    auth.onAuthStateChanged((user) => {
-      const btnAdmin = document.getElementById("btnAdmin");
-      if (user && user.email === adminEmail) {
-        btnAdmin.classList.remove("d-none");
-        btnAdmin.addEventListener("click", () => {
-          window.location.href = "admin.html";
-        });
-      }
-    });
-
-    loadMarkers();
+    // Carregar os pontos de ônibus ao carregar a página
+    loadBusStops();
+    getUserLocation();
   </script>
-
 </body>
 </html>
