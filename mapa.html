@@ -250,18 +250,16 @@
             ]
           })
         });
-
         const data = await response.json();
+        console.log(data); // Adicione esta linha para depuração
         const resposta = data.choices[0].message.content;
 
-        // Atualizar a resposta da IA com o resultado da OpenAI
-        respostaMsg.innerHTML = `<strong>IA:</strong> ${resposta}`;
-      } catch (error) {
-        // Se houver erro ao chamar a API
+  // Atualizar a resposta da IA com o resultado da OpenAI
+       respostaMsg.innerHTML = `<strong>IA:</strong> ${resposta}`;
+       } catch (error) {
         respostaMsg.innerHTML = `<strong>IA:</strong> Erro ao se comunicar com o servidor.`;
-        console.error("Erro ao acessar OpenAI:", error);
+      console.error("Erro ao acessar OpenAI:", error);
       }
-
       input.value = "";
       chat.scrollTop = chat.scrollHeight;
     }
