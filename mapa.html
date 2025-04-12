@@ -257,11 +257,15 @@
 
     document.getElementById('theme-toggle').addEventListener('click', () => {
       const html = document.documentElement;
-      const isDark = html.getAttribute('data-bs-theme') === 'dark';
-      html.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
-      document.getElementById('theme-toggle').innerHTML = isDark
-        ? '<i class="bi bi-moon-fill"></i> Modo Escuro'
-        : '<i class="bi bi-sun-fill"></i> Modo Claro';
+      const currentTheme = html.getAttribute('data-bs-theme');
+
+      if (currentTheme === 'dark') {
+        html.setAttribute('data-bs-theme', 'light');
+        document.getElementById('theme-toggle').innerHTML = '<i class="bi bi-sun-fill"></i> Modo Claro';
+      } else {
+        html.setAttribute('data-bs-theme', 'dark');
+        document.getElementById('theme-toggle').innerHTML = '<i class="bi bi-moon-fill"></i> Modo Escuro';
+      }
     });
 
     async function enviarMensagem() {
@@ -288,7 +292,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer SUA_CHAVE_OPENAI_AQUI`
+            "Authorization": `Bearer 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`
           },
           body: JSON.stringify({
             model: "gpt-3.5-turbo",
