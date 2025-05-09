@@ -202,7 +202,7 @@
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider)
         .then(() => {
-          window.location.href = "admin.html";
+          window.location.href = "mapa.html";
         })
         .catch((error) => {
           exibirMensagem("Erro: " + error.message);
